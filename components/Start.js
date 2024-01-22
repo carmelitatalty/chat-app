@@ -5,6 +5,8 @@ import {
   TextInput,
   ImageBackground,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { useState } from "react";
 
@@ -57,6 +59,10 @@ const Start = ({ navigation }) => {
             <Text style={[styles.startChattingText]}>Start Chatting</Text>
           </TouchableOpacity>
         </View>
+
+        { Platform.OS === "android" ? (
+          <KeyboardAvoidingView behavior="padding" />
+        ) : null }
       </ImageBackground>
     </View>
   );
