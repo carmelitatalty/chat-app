@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native";
-import { GiftedChat, Bubble, InputToolbar  } from "react-native-gifted-chat";
+import { GiftedChat, Bubble, InputToolbar } from "react-native-gifted-chat";
 import {
   query,
   collection,
@@ -9,8 +9,10 @@ import {
   addDoc,
 } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CustomActions from "./CustomActions";
+import MapView from "react-native-maps";
 
-const Chat = ({ route, navigation, db, isConnected }) => {
+const Chat = ({ route, navigation, db, isConnected, storage }) => {
   const [messages, setMessages] = useState([]);
 
   // Send first messages.
@@ -35,7 +37,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
             createdAt: new Date(doc.data().createdAt.toMillis()),
           });
         });
-        cacheMessages(newMessages)
+        cacheMessages(newMessages);
         setMessages(newMessages);
       });
     } else {
@@ -53,15 +55,19 @@ const Chat = ({ route, navigation, db, isConnected }) => {
 
   const cacheMessages = async (messages) => {
     try {
-      await AsyncStorage.setItem('messages', JSON.stringify(messages));
+      await AsyncStorage.setItem("messages", JSON.stringify(messages));
     } catch {
       console.log(error.message);
     }
-  }
+  };
 
   // Update messages when new message is created.
   const onSend = (newMessages) => {
     addDoc(collection(db, "messages"), newMessages[0]);
+  };
+
+  const renderCustomActions = (props) => {
+    return <CustomActions storage={storage} {...props} />;
   };
 
   // Render chat bubble
@@ -90,7 +96,26 @@ const Chat = ({ route, navigation, db, isConnected }) => {
   const renderInputToolbar = (props) => {
     if (isConnected) return <InputToolbar {...props} />;
     else return null;
-   }
+  };
+
+  // Renders custom views for chat bubbles. IE Map.
+  const renderCustomView = (props) => {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
+          region={{
+            latitude: currentMessage.location.latitude,
+            longitude: currentMessage.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        />
+      );
+    }
+    return null;
+  };
 
   return (
     <>
@@ -100,6 +125,8 @@ const Chat = ({ route, navigation, db, isConnected }) => {
           onSend={(messages) => onSend(messages)}
           renderBubble={renderBubble}
           renderInputToolbar={renderInputToolbar}
+          renderActions={renderCustomActions}
+          renderCustomView={renderCustomView}
           user={{
             _id: userID,
             name: name,

@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View, Alert } from "react-native";
+import { StyleSheet, Text, View, Alert, Button } from "react-native";
 
 // import the screens
 import Start from "./components/Start";
@@ -14,6 +14,7 @@ import {
   disableNetwork,
   enableNetwork,
 } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { useEffect } from "react";
 
@@ -34,6 +35,9 @@ export default function App() {
 
   // Initialize Cloud Firestore and get a reference to the service
   const db = getFirestore(app);
+
+  //Initialize Cloud Storage and get a reference to the service
+  const storage = getStorage(app);
 
   const connectionStatus = useNetInfo();
 
@@ -57,6 +61,7 @@ export default function App() {
             <Chat
               isConnected={connectionStatus.isConnected}
               db={db}
+              storage={storage}
               {...props}
             />
           )}
