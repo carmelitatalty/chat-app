@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Alert } from "react-native";
 
 // import the screens
 import Start from "./components/Start";
@@ -9,8 +9,13 @@ import Chat from "./components/Chat";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  disableNetwork,
+  enableNetwork,
+} from "firebase/firestore";
+import { useNetInfo } from "@react-native-community/netinfo";
+import { useEffect } from "react";
 
 export default function App() {
   const firebaseConfig = {
@@ -20,7 +25,7 @@ export default function App() {
     storageBucket: "chat-app-carmelita.appspot.com",
     messagingSenderId: "897168742904",
     appId: "1:897168742904:web:48451a1489f3c823a85e0d",
-    measurementId: "G-6EWJE0E55W"
+    measurementId: "G-6EWJE0E55W",
   };
 
   // Initialize Firebase
@@ -30,6 +35,17 @@ export default function App() {
   // Initialize Cloud Firestore and get a reference to the service
   const db = getFirestore(app);
 
+  const connectionStatus = useNetInfo();
+
+  useEffect(() => {
+    if (connectionStatus.isConnected === false) {
+      Alert.alert("Connection Lost!");
+      disableNetwork(db);
+    } else if (connectionStatus.isConnected === true) {
+      enableNetwork(db);
+    }
+  }, [connectionStatus.isConnected]);
+
   // Create the navigator
   const Stack = createNativeStackNavigator();
   return (
@@ -37,7 +53,13 @@ export default function App() {
       <Stack.Navigator initialRouteName="Start">
         <Stack.Screen name="Start" component={Start} />
         <Stack.Screen name="Chat">
-          {(props) => <Chat db={db} {...props} />}
+          {(props) => (
+            <Chat
+              isConnected={connectionStatus.isConnected}
+              db={db}
+              {...props}
+            />
+          )}
         </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
